@@ -1,0 +1,8 @@
+server:
+  port: 5020
+
+plugs:
+  url: ${plug_url}
+  authorization: ${plug_auth}
+  minimal: 1
+  count: 500

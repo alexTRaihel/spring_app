@@ -1,0 +1,19 @@
+logging:
+  level:
+    org:
+      springframework:
+        data:
+          r2dbc: DEBUG
+
+server:
+  port: 5100
+
+spring:
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/vehicle-app?currentSchema=services_db
+    username: postgres
+    password: ${db_password}
+  flyway:
+    url: jdbc:postgresql://localhost:5432/vehicle-app?currentSchema=services_db
+    user: postgres
+    password: ${db_password}
