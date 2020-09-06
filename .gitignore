@@ -4,6 +4,8 @@ HELP.md
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**
 !**/src/test/**
+.gradle
+.DS_Store
 
 ### STS ###
 .apt_generated
