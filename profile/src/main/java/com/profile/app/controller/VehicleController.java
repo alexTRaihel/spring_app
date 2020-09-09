@@ -26,11 +26,10 @@ public class VehicleController {
     }
 
     @PostMapping("/{owner_id}")
-    public ResponseEntity<String> saveVehicleByOwnerId(@PathVariable("owner_id") String id, @RequestBody Vehicle vehicle){
+    public Vehicle saveVehicleByOwnerId(@PathVariable("owner_id") String id, @RequestBody Vehicle vehicle){
 
         Profile profile = usrService.getUserById(Long.parseLong(id));
-        profile.getVehicles().add(vehicle);
-        usrService.saveUser(profile);
-        return ResponseEntity.ok("success");
+        vehicle.setOwner(profile);
+        return vehicleService.saveVehicle(vehicle);
     }
 }

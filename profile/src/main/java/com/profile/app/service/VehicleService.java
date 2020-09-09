@@ -20,8 +20,8 @@ public class VehicleService {
         return vehicleRepo.findById(id).orElseThrow(()->new VehicleOwnerAppException("exp"));
     }
 
-    public boolean saveVehicle(Vehicle vehicle){
-        return vehicleRepo.save(vehicle) != null;
+    public Vehicle saveVehicle(Vehicle vehicle){
+        return vehicleRepo.save(vehicle);
     }
 
     public List<Vehicle> getAllByOwner(Long id){
