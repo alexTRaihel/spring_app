@@ -6,3 +6,5 @@ spring:
     url: jdbc:postgresql://localhost:5432/vehicle-app?currentSchema=profiles_db
     username: postgres
     password: ${db_password}
+
+db_password: root

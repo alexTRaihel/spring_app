@@ -12,12 +12,15 @@ spring:
   r2dbc:
     url: r2dbc:postgresql://localhost:5432/vehicle-app?currentSchema=user_db
     username: postgres
-    password: ${db_password}
+    password: root
   flyway:
     url: jdbc:postgresql://localhost:5432/vehicle-app?currentSchema=user_db
     user: postgres
-    password: ${db_password}
+    password: root
 
 jwt:
-  secret: ${jwt_secret}
+  secret: secret_secret_secret_secret_secret_secret
   expiration: 86400
+
+db_password: root
+jwt_secret: secret_secret_secret_secret_secret_secret

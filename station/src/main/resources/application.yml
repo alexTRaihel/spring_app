@@ -6,3 +6,6 @@ plugs:
   authorization: ${plug_auth}
   minimal: 1
   count: 500
+
+plug_url: https://api.plugshare.com/v3/locations
+plug_auth: d2ViMjo3MmUzNDdhNWFlZGE0NjIwNDY4NmM4ZDEyYzJmYzkwNzcwYTMwMjlj

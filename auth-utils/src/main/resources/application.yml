@@ -1,6 +1,0 @@
-jwt:
-  secret: ${jwt_secret}
-  expiration: 86400
-
-server:
-  port: 5005

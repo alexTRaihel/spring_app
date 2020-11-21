@@ -4,9 +4,6 @@ plugins {
     id 'java'
 }
 
-group 'micro.services.app'
-version '1.0-SNAPSHOT'
-
 sourceCompatibility = '11'
 
 repositories {
