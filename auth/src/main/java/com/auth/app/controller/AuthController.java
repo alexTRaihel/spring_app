@@ -17,6 +17,7 @@ import java.util.Objects;
 
 @RestController
 @RequestMapping("/auth")
+@CrossOrigin(allowCredentials = "true", origins = {"http://localhost:8000"})
 public class AuthController {
 
     private static final ResponseEntity<Object> UNAUTHORIZED = ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -35,21 +36,22 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public Mono<ResponseEntity> login(ServerHttpRequest serverHttpRequest, @RequestBody UserCredentials credentials, ServerWebExchange exchange, ServerHttpResponse serverHttpResponse) {
+    public Mono<ResponseEntity> login(ServerHttpRequest serverHttpRequest, @RequestBody UserCredentials credentials,
+                                      ServerWebExchange exchange,
+                                      ServerHttpResponse serverHttpResponse) {
         return Mono.from(
                 userService.findByUserName(credentials.getUsername())
                         .map(userFromDB ->
                                 Objects.equals(credentials.getPassword(), userFromDB.getPassword())
-                                        ? ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, ResponseCookie.from("test3", "test3").build().toString()).body(prepareResponse(userFromDB, exchange, serverHttpResponse)) : UNAUTHORIZED
+                                        ? ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, getAuthCookies(userFromDB))
+                                        .body(jwtUtil.generateToken(userFromDB)): UNAUTHORIZED
                         )
                         .defaultIfEmpty(UNAUTHORIZED)
         );
     }
 
-    private String prepareResponse(UserCredentials userFromDB, ServerWebExchange exchange, ServerHttpResponse serverHttpResponse){
+    private String getAuthCookies(UserCredentials userFromDB){
         String token = jwtUtil.generateToken(userFromDB);
-        exchange.getResponse().addCookie(ResponseCookie.from("test", "test").build());
-        serverHttpResponse.addCookie(ResponseCookie.from("test2", "test2").build());
-        return token;
+        return ResponseCookie.from("auth_token", token).build().toString();
     }
 }

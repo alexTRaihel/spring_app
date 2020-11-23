@@ -1,0 +1,35 @@
+version: '3.6'
+services:
+  profile:
+    build: ./profile
+    ports:
+      - "5009:5009"
+    links:
+      - app-db
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://app-db:5432/vehicle-app?currentSchema=profiles_db
+      - MYAPP_JDBC_USER=postgres
+      - DB_PASSWORD=root
+
+  postgres:
+    image: postgres
+    restart: always
+    environment:
+      - DATABASE_HOST=127.0.0.1
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=root
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./docker_postgres_init.sql:/docker-entrypoint-initdb.d/docker_postgres_init.sql
+
+  pgadmin-compose:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "admin"
+      PGADMIN_DEFAULT_PASSWORD: "admin"
+    ports:
+      - "16543:8010"
+    depends_on:
+      - postgres
