@@ -6,6 +6,7 @@ HELP.md
 !**/src/test/**
 .gradle
 .DS_Store
+.key
 
 ### STS ###
 .apt_generated
