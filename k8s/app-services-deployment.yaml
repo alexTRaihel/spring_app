@@ -1,7 +1,7 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: app-gataway
+  name: app-gateway
 spec:
   replicas: 2
   minReadySeconds: 15
@@ -13,12 +13,12 @@ spec:
   template:
     metadata:
       labels:
-        app: app-gataway
+        app: app-gateway
     spec:
       containers:
-        - image: msapp/gataway-service
+        - image: msapp/gateway-service
           imagePullPolicy: Always
-          name: gataway-service
+          name: gateway-service
           envFrom:
             - configMapRef:
                 name: app-urls-config

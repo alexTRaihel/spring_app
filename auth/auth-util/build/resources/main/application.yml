@@ -1,0 +1,4 @@
+jwt:
+  secret: secret_secret_secret_secret_secret_secret
+  expiration: 60
+  crsfToken: 123qdq!
