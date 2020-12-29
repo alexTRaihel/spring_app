@@ -9,18 +9,28 @@ server:
   port: 5004
 
 spring:
+  profiles:
+    active: dev
   r2dbc:
-    url: r2dbc:postgresql://localhost:5432/vehicle-app?currentSchema=user_db
+    url: r2dbc:postgresql://localhost:5433/vehicle-app?currentSchema=user_db
     username: postgres
     password: root
   flyway:
-    url: jdbc:postgresql://localhost:5432/vehicle-app?currentSchema=user_db
+    url: jdbc:postgresql://localhost:5433/vehicle-app?currentSchema=user_db
     user: postgres
     password: root
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: google-client-id
+            client-secret: google-client-secret
 
 jwt:
   secret: secret_secret_secret_secret_secret_secret
-  expiration: 86400
+  expiration: 60
+  crsfToken: 123qdq!
 
 db_password: root
 jwt_secret: secret_secret_secret_secret_secret_secret

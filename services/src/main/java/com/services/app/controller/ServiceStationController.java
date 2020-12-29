@@ -21,18 +21,28 @@ public class ServiceStationController {
 
     @GetMapping("/{id}")
     @JsonView(Views.FullInfo.class)
-    private Mono<ServiceStation> getStationById(@PathVariable("id") String id){
+    private Mono<ServiceStation> getStationById(@PathVariable("id") String id) {
         return serviceStationService.getServiceByServiceId(Long.parseLong(id));
     }
 
     @GetMapping
     @JsonView(Views.ShortInfo.class)
-    private Flux<ServiceStation> getAllServiceStations(){
+    private Flux<ServiceStation> getAllServiceStations() {
         return serviceStationService.getAllServiceStations();
     }
 
     @PostMapping
-    private Mono<ServiceStation> createServiceStation(@RequestBody ServiceStation serviceStation){
+    private Mono<ServiceStation> createServiceStation(@RequestBody ServiceStation serviceStation) {
         return serviceStationService.createServiceStation(serviceStation);
+    }
+
+    @PostMapping("/update")
+    private Mono<ServiceStation> updateServiceStation(@RequestBody ServiceStation serviceStation) {
+        return serviceStationService.updateServiceStation(serviceStation);
+    }
+
+    @DeleteMapping("/remove/{id}")
+    private Mono<Void> deleteServiceStation(@PathVariable("id") String id) {
+        return serviceStationService.deleteServiceStationById(id);
     }
 }

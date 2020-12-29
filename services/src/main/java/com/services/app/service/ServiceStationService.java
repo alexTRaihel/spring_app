@@ -26,4 +26,12 @@ public class ServiceStationService {
     public Mono<ServiceStation> createServiceStation(ServiceStation serviceStation) {
         return serviceRepo.save(serviceStation);
     }
+
+    public Mono<ServiceStation> updateServiceStation(ServiceStation serviceStation) {
+        return serviceRepo.save(serviceStation);
+    }
+
+    public Mono<Void> deleteServiceStationById(String id) {
+        return serviceRepo.deleteById(Long.parseLong(id));
+    }
 }

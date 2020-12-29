@@ -9,7 +9,10 @@ public class AppConfig implements WebFluxConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**").allowedOrigins("*")
-                .allowedMethods("*");
+        registry.addMapping("/**")
+                .allowedOrigins("http://localhost:8000") // any host or put domain(s) here
+                .allowedMethods("GET, POST") // put the http verbs you want allow
+                .allowedHeaders("*")
+                .allowCredentials(true);
     }
 }

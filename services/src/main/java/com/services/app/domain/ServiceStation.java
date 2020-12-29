@@ -33,5 +33,7 @@ public class ServiceStation implements Serializable {
     @JsonView(Views.ShortInfo.class)
     private String url;
     @JsonView(Views.ShortInfo.class)
-    private Integer location_id;
+    private Integer locationId;
+    @JsonView(Views.ShortInfo.class)
+    private Boolean evacuation;
 }

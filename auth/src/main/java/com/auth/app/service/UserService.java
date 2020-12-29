@@ -15,8 +15,12 @@ public class UserService {
     }
 
     public Mono<UserCredentials> saveUser(UserCredentials userCredentials){
-        userCredentials.getId();
+//        checkUser(userCredentials)
         return userRepo.save(userCredentials);
+    }
+
+    public Mono<UserCredentials> checkUser(UserCredentials userCredential){
+        return userRepo.findByUsername(userCredential.getUsername());
     }
 
     public Mono<UserCredentials> findByUserName(String username){

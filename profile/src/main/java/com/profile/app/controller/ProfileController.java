@@ -2,7 +2,6 @@ package com.profile.app.controller;
 
 import com.profile.app.domain.Profile;
 import com.profile.app.service.UsrService;
-import com.profile.app.service.VehicleService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,11 +10,9 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin("*")
 public class ProfileController {
 
-    private VehicleService vehicleService;
     private UsrService profileService;
 
-    public ProfileController(VehicleService vehicleService, UsrService profileService) {
-        this.vehicleService = vehicleService;
+    public ProfileController(UsrService profileService) {
         this.profileService = profileService;
     }
 

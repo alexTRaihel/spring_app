@@ -10,5 +10,6 @@ create table services_db.service_station (
     access boolean,
     latitude double precision,
     longitude double precision,
-    location_id integer
+    locationId integer,
+    evacuation boolean
 );

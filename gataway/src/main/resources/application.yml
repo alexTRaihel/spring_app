@@ -8,11 +8,6 @@ spring:
     gateway:
       routes:
         - id: authService
-          uri: http://localhost:5010
+          uri: http://localhost:5004
           predicates:
-            - Path=/auth/**
-
-application:
-  cors:
-    allowed-origins:
-      - "*"
+            - Path=/**

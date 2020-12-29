@@ -1,0 +1,42 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: app-gataway
+spec:
+  replicas: 2
+  minReadySeconds: 15
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: app-gataway
+    spec:
+      containers:
+        - image: msapp/gataway-service
+          imagePullPolicy: Always
+          name: gataway-service
+          envFrom:
+            - configMapRef:
+                name: app-urls-config
+          env:
+            - name: SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: secret
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: jwt_secret
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: db_password
+          ports:
+            - containerPort: 80
