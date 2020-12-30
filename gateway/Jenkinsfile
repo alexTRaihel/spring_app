@@ -1,16 +1,35 @@
 pipeline {
-  agent none
-  options {
-  }
-  environment {
-  }
-  stages {
-    stage('Gradle Build') {
-        if (isUnix()) {
-            sh './gradlew clean build'
-        } else {
-            bat 'gradlew.bat clean build'
+    agent any
+
+    triggers{
+    }
+
+    options {
+    }
+
+    environment {
+        REMOTE_ADDRESS = "REPLACE_WITH_REMOTE_ADDRESS"
+    }
+
+    stages {
+		stage ("build gradle") {
+        	steps {
+            	sh './gradlew clean build'
+            }
         }
     }
-  }
+
+    stage ('Build docker image') {
+        steps {
+            sh 'docker build -t turkogluc/spring-jenkins-demo .'
+        }
+    }
+
+    stage ('Deploy image to remote server') {
+        steps {
+            withCredentials([sshUserPrivateKey(credentialsId: 'instance-1', keyFileVariable: 'KEY_FILE', usernameVariable: 'USER')]) {
+                sh 'ssh -i ${KEY_FILE} ${USER}@${REMOTE_ADDRESS} "docker run -d turkogluc/spring-jenkins-demo"'
+            }
+        }
+    }
 }
