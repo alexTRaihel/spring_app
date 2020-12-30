@@ -19,17 +19,5 @@ pipeline {
         }
     }
 
-    stage ('Build docker image') {
-        steps {
-            sh 'docker build -t turkogluc/spring-jenkins-demo .'
-        }
-    }
 
-    stage ('Deploy image to remote server') {
-        steps {
-            withCredentials([sshUserPrivateKey(credentialsId: 'instance-1', keyFileVariable: 'KEY_FILE', usernameVariable: 'USER')]) {
-                sh 'ssh -i ${KEY_FILE} ${USER}@${REMOTE_ADDRESS} "docker run -d turkogluc/spring-jenkins-demo"'
-            }
-        }
-    }
 }
