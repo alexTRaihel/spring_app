@@ -1,0 +1,295 @@
+def ARTIFACT_VERSION
+
+pipeline {
+  agent {
+    kubernetes {
+      yaml """
+kind: Pod
+metadata:
+  name: jenkins-maven
+  namespace: jenkins
+spec:
+  nodeSelector:
+    ccloud.sap.com/nodepool: jenkins1
+  containers:
+  - name: jnlp
+    image: project-containers-wbs.pmp.only.sap/wcms/inbound-agent-openjdk:latest
+    tty: true
+    workingDir: /jenkins
+  - name: maven
+    image: project-containers-wbs.pmp.only.sap/wcms/mvn.java11
+    env:
+    - name: POSTGRES_SERVICE
+      value: "localhost"
+    - name: POSTGRES_DB
+      value: "maui_core"
+    - name: POSTGRES_USER
+      value: "postgresadmin"
+    - name: POSTGRES_PASSWORD
+      value: "pg_r00t_pw"
+    command: ["/bin/sh"]
+    tty: true
+    workingDir: /jenkins
+    volumeMounts:
+      - name: m2-repo
+        mountPath: /root/.m2
+  - name: postgres
+    image: project-containers-wbs.pmp.only.sap/wcms/com.sap.cx.maui.core.postgres:latest
+    imagePullPolicy: Always
+    env:
+    - name: POSTGRES_DB
+      value: "maui_core"
+    - name: POSTGRES_USER
+      value: "postgresadmin"
+    - name: POSTGRES_PASSWORD
+      value: "pg_r00t_pw"
+    command: ["/bin/sh", "-c"]
+    args:
+    - echo starting;
+      docker-entrypoint.sh postgres;
+    ports:
+      - containerPort: 5432
+  - name: python
+    image: project-containers-wbs.pmp.only.sap/wcms/py.mysql:latest
+    command: ["/bin/sh"]
+    tty: true
+    workingDir: /jenkins
+  - name: kaniko
+    image: gcr.io/kaniko-project/executor:debug-v1.3.0
+    command:
+    - /busybox/cat
+    tty: true
+    workingDir: /jenkins
+    volumeMounts:
+      - name: kaniko-secret
+        mountPath: /kaniko/.docker
+      - name: sapnetca
+        mountPath: /kaniko/ssl/certs/sapnetca.crt
+        subPath: SAPNETCA_G2.cer
+      - name: m2-repo
+        mountPath: /root/.m2
+  volumes:
+  - name: kaniko-secret
+    secret:
+      secretName: kaniko-secret
+  - name: sapnetca
+    configMap:
+      name: sapnetca
+  - name: m2-repo
+    persistentVolumeClaim:
+      claimName: m2-repo
+"""
+    }
+  }
+  options { timestamps () }
+  environment {
+    MAVEN_OPTS = '-Xmx1536m -Xms512m'
+    REPO = 'https://github.wdf.sap.corp/wcms/com.sap.cx.maui.core.git'
+    REPO_NAME = 'com.sap.cx.maui.core'
+    SERVICE = 'cryptography'
+    SERVICE_NAME = "${REPO_NAME}.${SERVICE}"
+    ARTIFACT_NAME = "${SERVICE}-ms"
+    MAVENREPOPATH = "/root/.m2/repository/com/sap/cx/maui/core/${SERVICE}-ms"
+    KUBECTL_CREDS = credentials('TWBS_I804099_03')
+    DEV_TENANT_ID = "817f68a4ea514d77b8587730572f178c"
+    DEV_PROJECT_NAME = "SAP_IT_WCMS-NONPROD"
+    OS_AUTH_URL = 'https://identity-3.eu-de-2.cloud.sap/v3'
+    OS_IDENTITY_API_VERSION = '3'
+    OS_PROJECT_DOMAIN_NAME = 'wbs'
+    OS_TENANT_NAME = 'web_business_systems'
+    OS_USER_DOMAIN_NAME = 'wbs'
+    OS_USERNAME = "${KUBECTL_CREDS_USR}"
+    OS_PASSWORD = "${KUBECTL_CREDS_PSW}"
+    OS_REGION_NAME = 'eu-de-2'
+  }
+  parameters {
+        string(name: 'VERSION', defaultValue: '1.0', description: 'Version Format Major.Minor - Build Number will be added')
+        booleanParam(name: 'builddev', defaultValue: true, description: 'Build and Deploy DEV')
+        booleanParam(name: 'buildqa', defaultValue: false, description: 'Build and Deploy QA')
+  }
+  stages {
+    stage ('Build DEV Stage') {
+      when {
+        anyOf {
+          expression { return params.builddev }
+        }
+      }
+      stages {
+        stage ('Build Snapshot - Deploy to Nexus') {
+          steps {
+            container(name: 'maven') {
+              echo "Build Snapshot and deploy to Nexus Snapshots repository"
+              sh 'mvn -f ${SERVICE}-service/pom.xml clean versions:set -DnewVersion=${VERSION}.0-SNAPSHOT'
+              sh 'mvn -f ${SERVICE}-service/pom.xml org.jacoco:jacoco-maven-plugin:prepare-agent install -DtestFailureIgnore=true'
+              sh 'mvn -f ${SERVICE}-service/pom.xml org.jacoco:jacoco-maven-plugin:report'
+              sh 'mvn -f ${SERVICE}-service/pom.xml sonar::sonar -Psonar'
+          		sh 'mvn -f ${SERVICE}-service/pom.xml deploy -DskipTests'
+            }
+          }
+        }
+        stage ('Sonar Results Check') {
+          steps {
+            container(name: 'python') {
+              echo "Pause to allow time for sonar to process results"
+              echo "Run python script to verify sonar results"
+              sh 'python --version'
+              sh "python sonar_api_check.py ${SERVICE_NAME}"
+            }
+          }
+        }
+      }
+    }
+    stage ('Build Image Stage') {
+      when {
+        anyOf {
+          expression { return params.builddev }
+        }
+      }
+      stages {
+        stage ('Build Maui Service DEV Image - Upload to Project Container Registry') {
+          environment {
+            PATH = "/busybox:/kaniko:$PATH"
+          }
+          steps {
+            script {
+              ARTIFACT_VERSION = "${VERSION}.0-SNAPSHOT"
+              println "Build Number = " + BUILD_NUMBER
+              println "Artifact Version = " + ARTIFACT_VERSION
+            }
+            container(name: 'kaniko', shell: '/busybox/sh') {
+              script {
+                env.ARTIFACT_VERSION = "${ARTIFACT_VERSION}"
+              }
+              sh '''#!/busybox/sh
+              cp -rf /jenkins/workspace/maui/${SERVICE_NAME}/certificates/* .
+              cp -f ${MAVENREPOPATH}/${ARTIFACT_VERSION}/${ARTIFACT_NAME}-${ARTIFACT_VERSION}.jar service.jar
+              cp -f /jenkins/workspace/maui/${SERVICE_NAME}/service.dockerfile /jenkins/workspace/maui/${SERVICE_NAME}/${SERVICE}-service/service.dockerfile
+              /kaniko/executor -f /jenkins/workspace/maui/${SERVICE_NAME}/${SERVICE}-service/service.dockerfile -c "`pwd`/" --destination=project-containers-wbs-push.pmp.only.sap/wcms/${SERVICE_NAME}:${VERSION}.0-SNAPSHOT --destination=project-containers-wbs-push.pmp.only.sap/wcms/${SERVICE_NAME}:dev
+              '''
+            }
+          }
+        }
+      }
+    }
+    stage ('Deploy DEV Stage') {
+      when {
+        anyOf {
+          expression { return params.builddev }
+        }
+      }
+      stages {
+        stage ('Deploy DEV Image to Kubernetes') {
+          steps {
+            container(name: 'jnlp') {
+              script {
+                env.OS_PROJECT_NAME = "${DEV_PROJECT_NAME}"
+                env.OS_TENANT_ID = "${DEV_TENANT_ID}"
+                sh "kubernikusctl auth init"
+                println "-------------- Applying statefulset, service and configmap for ${SERVICE}-ms"
+                sh "kubectl apply -f ${SERVICE}-service/maui-dev-${SERVICE}.yml"
+                println "-------------- Setting statefulset annotation version to build number"
+                def newVersion = "1.0.${BUILD_NUMBER}"
+                println "New annotation version = " + newVersion
+                sh "kubectl patch statefulset maui-${SERVICE} -n maui-dev-web --type=json --patch=[{\\\"op\\\":\\\"replace\\\",\\\"path\\\":\\\"/spec/template/metadata/annotations/version\\\",\\\"value\\\":\\\"$newVersion\\\"}]"
+              }
+            }
+          }
+        }
+      }
+    }
+    stage ('Build Application Release Stage') {
+      when {
+        anyOf {
+          expression { return params.buildqa }
+        }
+      }
+      stages {
+        stage ('Build Release - Deploy to Nexus') {
+          steps {
+            container(name: 'maven') {
+              echo "Build release version and deploy to Nexus Release repository"
+              sh 'mvn -f ${SERVICE}-service/pom.xml clean versions:set -DnewVersion=${VERSION}.${BUILD_NUMBER}'
+              sh 'mvn -f ${SERVICE}-service/pom.xml deploy'
+            }
+          }
+        }
+      }
+    }
+    stage ('Build Release Image') {
+      when {
+        anyOf {
+          expression { return params.buildqa }
+        }
+      }
+      stages {
+        stage ('Build and Upload QA Image') {
+          environment {
+            PATH = "/busybox:/kaniko:$PATH"
+          }
+          steps {
+            script {
+              ARTIFACT_VERSION = "${VERSION}.${BUILD_NUMBER}"
+              println "Build Number = " + BUILD_NUMBER
+              println "Artifact Version = " + ARTIFACT_VERSION
+            }
+            container(name: 'kaniko', shell: '/busybox/sh') {
+              script {
+                env.ARTIFACT_VERSION = "${ARTIFACT_VERSION}"
+              }
+              sh '''#!/busybox/sh
+              cp -rf /jenkins/workspace/maui/${SERVICE_NAME}/certificates/* .
+              cp -f ${MAVENREPOPATH}/${ARTIFACT_VERSION}/${ARTIFACT_NAME}-${ARTIFACT_VERSION}.jar service.jar
+              cp -f /jenkins/workspace/maui/${SERVICE_NAME}/service.dockerfile /jenkins/workspace/maui/${SERVICE_NAME}/${SERVICE}-service/service.dockerfile
+              /kaniko/executor -f /jenkins/workspace/maui/${SERVICE_NAME}/${SERVICE}-service/service.dockerfile -c "`pwd`/" --destination=project-containers-wbs-push.pmp.only.sap/wcms/${SERVICE_NAME}:${VERSION}.${BUILD_NUMBER} --destination=project-containers-wbs-push.pmp.only.sap/wcms/${SERVICE_NAME}:qa
+              '''
+            }
+          }
+        }
+      }
+    }
+    stage ('Deploy QA Stage') {
+      when {
+        anyOf {
+          expression { return params.buildqa }
+        }
+      }
+      stages {
+        stage ('Deploy QA Image to Kubernetes') {
+          steps {
+            container(name: 'jnlp') {
+              script {
+                env.OS_PROJECT_NAME = "${DEV_PROJECT_NAME}"
+                env.OS_TENANT_ID = "${DEV_TENANT_ID}"
+                sh "kubernikusctl auth init"
+                println "-------------- Applying statefulset, service and configmap for ${SERVICE}-ms"
+                sh "kubectl apply -f ${SERVICE}-service/maui-qa-${SERVICE}.yml"
+                println "-------------- Setting statefulset annotation version to build number"
+                def newVersion = "1.0.${BUILD_NUMBER}"
+                println "New annotation version = " + newVersion
+                sh "kubectl patch statefulset maui-${SERVICE} -n maui-qa-web --type=json --patch=[{\\\"op\\\":\\\"replace\\\",\\\"path\\\":\\\"/spec/template/metadata/annotations/version\\\",\\\"value\\\":\\\"$newVersion\\\"}]"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  post {
+  success {
+    slackSend channel: '#status_maui',
+      color: 'good',
+      message: """Pipeline completed for ${REPO_NAME}: ${SERVICE_NAME}-${VERSION}.${BUILD_NUMBER}
+        Link: <${env.BUILD_URL}|${currentBuild.fullDisplayName}>
+        """
+  }
+  unsuccessful {
+    slackSend channel: '#status_maui',
+      color: 'danger',
+      message: """Pipeline failed for ${REPO_NAME}: ${SERVICE_NAME}-${VERSION}.${BUILD_NUMBER}
+        Job: ${env.JOB_NAME}
+        Build: ${env.BUILD_NUMBER}
+        Link: <${env.BUILD_URL}|${currentBuild.fullDisplayName}>
+        """
+    }
+  }
+}

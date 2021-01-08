@@ -3,24 +3,29 @@ package com.auth.app.service;
 import com.auth.app.domain.UserCredentials;
 import com.auth.utils.jwt.JWTUtil;
 import com.auth.utils.model.UserAuthModel;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 import java.util.Objects;
+import java.util.function.Function;
 
 @Service
 public class AuthService {
 
+    @Value("${jwt.expiration.time.minutes}")
+    public Long jwtExpirationTimesMinutes;
+
     private static final ResponseEntity<Object> UNAUTHORIZED = ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
     private final UserService userService;
-    private final JWTUtil jwtUtil;
+    private final Function<UserAuthModel, String> jwtUtilFunction;
 
     public AuthService(UserService userService, JWTUtil jwtUtil) {
         this.userService = userService;
-        this.jwtUtil = jwtUtil;
+        this.jwtUtilFunction = jwtUtil.buildJWTFunctionGenearator(jwtExpirationTimesMinutes);
     }
 
     public Mono<ResponseEntity> doLogin(UserCredentials credentials, ServerHttpRequest serverHttpRequest){
@@ -40,7 +45,7 @@ public class AuthService {
 
     private ResponseEntity getResponse(UserCredentials userFromDB, ServerHttpRequest serverHttpRequest){
 
-        String jwt = jwtUtil.generateJwt(mapToUserAuthModel(userFromDB));
+        String jwt = jwtUtilFunction.apply(mapToUserAuthModel(userFromDB));
 
         ResponseCookie authCookie = ResponseCookie.fromClientResponse("X-Auth", jwt)
                 .maxAge(3600)

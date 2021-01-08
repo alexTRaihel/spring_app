@@ -1,0 +1,11 @@
+spring:
+  profiles:
+    active: dev
+  r2dbc:
+    url: r2dbc:postgresql://ht-home-pro.local:5432/vehicle-app?currentSchema=user_db
+    username: postgres
+    password: root
+  flyway:
+    url: jdbc:postgresql://ht-home-pro.local:5432/vehicle-app?currentSchema=user_db
+    user: postgres
+    password: root

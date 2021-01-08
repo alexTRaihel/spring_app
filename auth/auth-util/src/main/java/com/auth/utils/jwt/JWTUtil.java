@@ -6,48 +6,33 @@ import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
 import java.security.KeyPair;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.function.Function;
 
-@Component
 public class JWTUtil {
 
     private KeyPair keyPair = Keys.keyPairFor(SignatureAlgorithm.RS256);
 
-    @Value("${jwt.secret}")
-    private String privateKey;
-
-    @Value("${jwt.crsfToken}")
-    private String crsfToken;
-
-    @Value("${jwt.expiration}")
-    private Long expirationMinutes;
-
-    public String generateJwt(UserAuthModel userCredentials) {
+    public Function<UserAuthModel, String> buildJWTFunctionGenearator(Long expirationMinutes) {
 
         HashMap<String, Object> claims = new HashMap<>();
 
-        Date creationDate = new Date();
-        Date expirationDate = Date.from(Instant.now().plus(Duration.ofMinutes(expirationMinutes)));
-
-        return Jwts.builder()
+        return userCredentials -> Jwts.builder()
                 .addClaims(claims)
                 .setSubject(userCredentials.getUsername())
-                .setIssuedAt(creationDate)
-                .setExpiration(expirationDate)
+                .setIssuedAt(Date.from(Instant.now()))
+                .setExpiration(Date.from(Instant.now().plus(Duration.ofMinutes(expirationMinutes))))
                 .signWith(keyPair.getPrivate(), SignatureAlgorithm.RS256)
                 .compact();
     }
 
-    public Jws<Claims> validateJwt(String jwt) {
-
-        return Jwts.parserBuilder()
+    public Function<String, Jws<Claims>>  buildJWTFunctionValiadtor() {
+        return jwt -> Jwts.parserBuilder()
                 .setSigningKey(keyPair.getPublic())
                 .build()
                 .parseClaimsJws(jwt);

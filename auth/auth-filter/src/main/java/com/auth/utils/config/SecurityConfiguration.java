@@ -1,6 +1,8 @@
 package com.auth.utils.config;
 
 import com.auth.utils.jwt.JWTUtil;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpCookie;
@@ -16,6 +18,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.Collections;
 import java.util.Objects;
+import java.util.function.Function;
 
 @Configuration
 public class SecurityConfiguration {
@@ -61,15 +64,13 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public JWTUtil jwtUtil(){
-        return new JWTUtil();
-    }
+    public ReactiveAuthenticationManager jwtAuthenticationManager() {
 
-    @Bean
-    public ReactiveAuthenticationManager jwtAuthenticationManager(JWTUtil jwtUtil) {
+        final Function<String, Jws<Claims>> jwtValidationFunction = new JWTUtil().buildJWTFunctionValiadtor();
+
         return authentication ->
                 Mono.justOrEmpty(authentication)
-                    .map(auth -> jwtUtil.validateJwt((String) auth.getCredentials()))
+                    .map(auth -> jwtValidationFunction.apply((String) auth.getCredentials()))
                     .map(jws ->
                             new UsernamePasswordAuthenticationToken(
                                     jws.getBody().getSubject(),

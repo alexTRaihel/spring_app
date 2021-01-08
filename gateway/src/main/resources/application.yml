@@ -11,3 +11,12 @@ spring:
           uri: http://localhost:5004
           predicates:
             - Path=/auth/**
+        - id: servService
+          uri: http://localhost:5100
+          predicates:
+            - Path=/serv/**
+
+jwt:
+  secret: secret_secret_secret_secret_secret_secret
+  expiration: 60
+  crsfToken: 123qdq!

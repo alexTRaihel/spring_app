@@ -1,0 +1,72 @@
+docker build -t springio/gs-spring-boot-docker .
+docker run -p 8080:8080 springio/gs-spring-boot-docker
+
+docker run -e "SPRING_PROFILES_ACTIVE=prod" -p 8080:8080 -t springio/gs-spring-boot-docker
+docker run --name some-postgres -e POSTGRES_PASSWORD=root -d postgres
+
+sudo docker run -d --net="host" -it <IMAGE>
+
+docker-compose build
+docker-compose up
+docker-compose down
+docker-compose ps
+docker-compose exec [service name] [command]
+
+docker pull dpage/pgadmin4
+docker run --name pgadmin -p 16543:8010 -e 'PGADMIN_DEFAULT_EMAIL=admin' -e 'PGADMIN_DEFAULT_PASSWORD=admin' -d dpage/pgadmin4
+
+docker run -it --rm --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3-management
+
+docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+docker build -f Dockerfile -t $DOCKER_USER_ID/sentiment-analysis-frontend .
+docker pull $DOCKER_USER_ID/sentiment-analysis-frontend
+docker run -d -p 80:80 $DOCKER_USER_ID/sentiment-analysis-frontend
+docker push $DOCKER_USER_ID/sentiment-analysis-frontend
+
+minikube start
+kubectl get nodes
+
+kubectl delete pod app-frontend
+
+kubectl create -f sa-frontend-pod.yaml
+pod "sa-frontend" created
+
+kubectl apply -f sa-frontend-pod.yaml
+Warning: kubectl apply should be used on resource created by either kubectl create --save-config or kubectl apply
+pod "sa-frontend" configured
+kubectl apply -f sa-frontend-pod2.yaml
+Warning: kubectl apply should be used on resource created by either kubectl create --save-config or kubectl apply
+pod "sa-frontend2" configured
+
+kubectl create -f service-sa-frontend-lb.yaml
+service "sa-frontend-lb" created
+
+kubectl apply -f sa-frontend-deployment.yaml
+deployment "sa-frontend" created
+
+minikube service sa-frontend-lb
+
+
+Извлечение информации
+kubectl get <object-type> — вывести список объектов определенного типа. В качестве типов может выступать 'pod', 'service', 'deployment' и другие. Чтобы посмотреть все объекты в неймспейсе подставьте 'all'.
+kubectl get <object-type> <object-name> -o yaml — выведет полную конфигурацию объекта в yaml-формате.
+kubectl describe <object-type> <object-name> — подробная информация об объекте.
+kubectl cluster-info — информация о кластере.
+kubectl top pod/node — потребляемые ресурсы подами/нодами.
+
+Изменение конфигурации кластера
+kubectl apply -f <file/directory> — применить конфигурационный файл или же все файлы из директории.
+kubectl delete <object-type> <object-name> — удалить объект.
+kubectl scale deployment <deployment-name> --replicas=n — отмасштабировать деплоймент. Если выполнить подряд две команды: с n = 0, а затем с другим n, то пересоздаст все поды в деплойменте.
+kubectl edit <object-type> <object-name> — редактировать конфигурацию объекта в редакторе.
+kubectl rollout undo deployment <deployment-name> — откатить изменения деплоймента до прошлой версии.
+
+Дебаг
+kubectl logs <pod-name> — отобразить логи контейнера. Параметр -f позволит следить за логами в реальном времени.
+kubectl port-forward <pod-name> <host-port>:<container-port> — пробросить порт хоста на порт контейнера. Используется для отправки запросов подам вручную.
+kubectl exec -it <pod-name> -- /bin/sh — открыть терминал в контейнере пода.
+kubectl run curl --image=radial/busyboxplus:curl -i --tty — создать отдельный под. В данном примере создается легкий контейнер с curl, с помощью которого можно будет, например, проверить доступность сервисов.
+kubectl get events --sort-by='.metadata.creationTimestamp' — получить список внутренних событий Kubernetes. Эта информация поможет ответить, например, на вопрос, почему под не смог запуститься.
+
+
+helm create <chart-name>

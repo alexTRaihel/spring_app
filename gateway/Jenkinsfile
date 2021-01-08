@@ -6,9 +6,19 @@ pipeline {
     }
 
     stages {
-		stage ("build gradle") {
+		stage ("Build stage") {
         	steps {
             	sh 'gradle :gateway:clean :gateway:build'
+            }
+        }
+        stage('Unit Tests') {
+            steps {
+                sh 'gradle :gateway:test'
+            }
+            post {
+                always {
+                    junit '**/build/test-results/test/TEST-*.xml'
+                }
             }
         }
     }

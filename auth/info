@@ -1,3 +1,8 @@
 Bcrypt Encoder
 
 docker run --net=host -it auth-app
+
+gradle :ABC:build
+gradle build -p moduleA
+
+mvn -f

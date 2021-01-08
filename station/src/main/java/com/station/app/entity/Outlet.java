@@ -10,6 +10,7 @@ import java.io.Serializable;
 public class Outlet implements Serializable {
 
     private Long id;
+    private Long plugShareOutletId;
     private Integer connector;
     private Integer power;
     private Integer kilowatts;

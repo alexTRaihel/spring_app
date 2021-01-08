@@ -5,6 +5,7 @@ import com.station.app.exception.StationAppException;
 import com.station.app.service.StationService;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -21,10 +22,10 @@ public class StationController {
     }
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public Mono<List<Plug>> getStations(@RequestParam("latitude") String latitude,
-                                   @RequestParam("longitude") String longitude,
-                                   @RequestParam("spanLng") String spanLng,
-                                   @RequestParam("spanLat") String spanLat) {
+    public Flux<Plug> getStations(@RequestParam("latitude") String latitude,
+                                  @RequestParam("longitude") String longitude,
+                                  @RequestParam("spanLng") String spanLng,
+                                  @RequestParam("spanLat") String spanLat) {
 
         Double latitudeDouble;
         Double longitudeDouble;
@@ -40,7 +41,10 @@ public class StationController {
             throw new StationAppException("Request params is not valid exception");
         }
 
-        return stationService.getStationsByLatitudeAndLongitude(latitudeDouble, longitudeDouble, spanLngDouble, spanLatDouble);
+        return stationService.getStationsByLatitudeAndLongitude(latitudeDouble,
+                longitudeDouble,
+                spanLngDouble,
+                spanLatDouble);
     }
 
     @GetMapping(path = "/near", produces = MediaType.APPLICATION_JSON_VALUE)

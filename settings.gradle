@@ -12,14 +12,14 @@ pluginManagement {
     }
 }
 
-rootProject.name = 'micro.services'
+rootProject.name = 'micro.serv'
 
-include ':services'
-include ':auth'
+include ':serv'
 include ':profile'
 include ':station'
 include ':gateway'
 include ':auth:auth-filter'
 include ':auth:auth-token'
 include ':auth:auth-util'
-include ':utils:main-utils'
+include ':utils:regions-client'
+

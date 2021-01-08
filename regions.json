@@ -1,0 +1,8 @@
+{"dataSource":[{"Text":"Брестская","Value":"1"},
+  {"Text":"Витебская","Value":"2"},
+  {"Text":"Гомельская","Value":"3"},
+  {"Text":"Гродненская","Value":"4"},
+  {"Text":"Минская","Value":"6"},
+  {"Text":"Могилевская","Value":"7"}],
+  "dataTextField":"Text","filter":"contains",
+  "dataValueField":"Value","index":4,"suggest":true}

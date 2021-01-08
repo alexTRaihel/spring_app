@@ -11,5 +11,6 @@ import java.util.List;
 public class Station implements Serializable {
 
     private Long id;
+    private Long plugShareStationId;
     private List<Outlet> outlets;
 }
