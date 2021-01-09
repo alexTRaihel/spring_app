@@ -16,6 +16,15 @@ public class ServiceStation implements Serializable {
     @Id
     @JsonView(Views.Id.class)
     private Long id;
+
+    @JsonView(Views.ShortInfo.class)
+    private Integer regionId;
+    @JsonView(Views.ShortInfo.class)
+    private Integer cityId;
+
+    @JsonView(Views.FullInfo.class)
+    private Double score;
+
     @JsonView(Views.ShortInfo.class)
     private String name;
     @JsonView(Views.ShortInfo.class)
@@ -32,10 +41,6 @@ public class ServiceStation implements Serializable {
     private String description;
     @JsonView(Views.ShortInfo.class)
     private String url;
-    @JsonView(Views.ShortInfo.class)
-    private Integer regionId;
-    @JsonView(Views.ShortInfo.class)
-    private Integer cityId;
     @JsonView(Views.ShortInfo.class)
     private Boolean evacuation;
 }

@@ -15,8 +15,10 @@ public class Plug implements Serializable {
 
     @Id
     private Long id;
+
     private Long plugShareId;
     private Long locationId;
+    private String countryCode;
     private Double score;
     private String address;
     private Integer access;
@@ -26,6 +28,5 @@ public class Plug implements Serializable {
     private String icon;
     private String url;
     private String iconType;
-    private Address addressFull;
     private List<Station> stations;
 }

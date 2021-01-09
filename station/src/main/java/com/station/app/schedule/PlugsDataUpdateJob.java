@@ -4,9 +4,13 @@ import com.station.app.client.YandexAddressUpdateClient;
 import com.station.app.entity.Plug;
 import com.station.app.repo.PlugsRepository;
 import com.station.app.service.StationService;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
 
+@EnableScheduling
 public class PlugsDataUpdateJob {
 
     private final StationService stationService;
@@ -19,10 +23,10 @@ public class PlugsDataUpdateJob {
         this.stationService = stationService;
         this.plugsRepository = plugsRepository;
         this.yandexAddressUpdateClient = yandexAddressUpdateClient;
-        this.updatePlugsData(53.67785,
-                23.829484,
-                2.0421954159703546,
-                21.093749999999996);
+//        this.updatePlugsData(52.94271406719893,
+//                29.516808446831,
+//                12.5244140625,
+//                5.297821900759615);
     }
 
     public void updatePlugsData(Double lat,
@@ -30,7 +34,7 @@ public class PlugsDataUpdateJob {
                                 Double spanLng,
                                 Double spanLat){
         stationService
-                .getStationsByLatitudeAndLongitude(lat, lon, spanLng, spanLat)
+                .getStationsByLatitudeAndLongitudeFromApi(lat, lon, spanLng, spanLat)
                 .subscribeOn(Schedulers.parallel())
                 .flatMap(this::updateAddress)
                 .flatMap(plugsRepository::save)
@@ -44,16 +48,19 @@ public class PlugsDataUpdateJob {
                 plug.getLongitude(),
                 "ru_RU",
                 2,
-                "house"
+                "street"
         ).map(address -> {
-            plug.setAddressFull(address);
+            plug.setCountryCode(address.getCountryCode());
+            plug.setLocationId(address.getCityId());
             return plug;
         }).flux();
     }
 
-
-
-
+    @Async
+    @Scheduled(fixedRate = 300)
+    public void testScheduled(){
+        System.out.println("HELLO!!!");
+    }
 
 //    userService.getFavoriteMemes(userId)
 //            .timeout(Duration.ofMillis(800)) //длительность тайм-аута

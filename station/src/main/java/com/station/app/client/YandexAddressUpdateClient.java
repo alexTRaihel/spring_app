@@ -9,6 +9,8 @@ import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.util.Objects;
+
 @Slf4j
 public class YandexAddressUpdateClient {
 
@@ -77,22 +79,31 @@ public class YandexAddressUpdateClient {
 
         try {
             JsonNode nodeRoot = objectMapper.readTree(string);
-            JsonNode nodeAddress = nodeRoot
+            JsonNode featureMember = nodeRoot
                     .get("response")
                     .get("GeoObjectCollection")
                     .get("featureMember")
-                    .get(0)
-                    .get("GeoObject")
-                    .get("metaDataProperty")
-                    .get("GeocoderMetaData")
-                    .get("Address");
+                    .get(0);
+            if (Objects.nonNull(featureMember)) {
 
-            address.setCountryCode(nodeAddress.get("country_code").textValue());
-//            address.setFormatted(nodeAddress.get("formatted").textValue());
+                JsonNode nodeAddress = featureMember
+                        .get("GeoObject")
+                        .get("metaDataProperty")
+                        .get("GeocoderMetaData")
+                        .get("Address");
+
+
+                address.setCountryCode(nodeAddress.get("country_code").textValue());
+                address.setFormatted(nodeAddress.get("formatted").textValue());
+            } else {
+                log.error(nodeRoot.asText());
+            }
 
         } catch (JsonProcessingException e) {
-            log.info(e.getMessage());
+            log.error(e.getMessage());
             e.printStackTrace();
+        } catch (NullPointerException ex){
+            log.error(ex.getMessage());
         }
 
         return Mono.just(address);

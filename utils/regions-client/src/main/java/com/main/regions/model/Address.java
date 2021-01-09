@@ -8,7 +8,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class Address implements Serializable {
 
-    private String country_code;
+    private String countryCode;
     private String formatted;
     private String country;
     private String province;
